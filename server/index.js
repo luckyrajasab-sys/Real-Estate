@@ -64,18 +64,21 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error", details: err.message });
 });
 
-const server = app.listen(PORT, async () => {
-  console.log(`\n🚀 Offhome Backend Server running on http://localhost:${PORT}`);
-  console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
-  console.log(`🏡 Properties API: http://localhost:${PORT}/api/properties\n`);
+if (!process.env.VERCEL) {
+  app.listen(PORT, async () => {
+    console.log(`\n🚀 Offhome Backend Server running on http://localhost:${PORT}`);
+    console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`🏡 Properties API: http://localhost:${PORT}/api/properties\n`);
 
-  try {
-    await prisma.$connect();
-    console.log("✅ Successfully connected to PostgreSQL database via Prisma.");
-  } catch (e) {
-    console.warn("⚠️  Prisma database connection check warning:", e.message);
-    console.warn("👉 Make sure your PostgreSQL database is running and DATABASE_URL is set in .env.");
-  }
-});
+    try {
+      await prisma.$connect();
+      console.log("✅ Successfully connected to PostgreSQL database via Prisma.");
+    } catch (e) {
+      console.warn("⚠️  Prisma database connection check warning:", e.message);
+      console.warn("👉 Make sure your PostgreSQL database is running and DATABASE_URL is set in .env.");
+    }
+  });
+}
 
 export default app;
+
