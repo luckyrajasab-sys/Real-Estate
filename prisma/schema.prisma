@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String         @id @default(uuid())
+  email            String         @unique
+  passwordHash     String?
+  name             String
+  phone            String?
+  verified         Boolean        @default(false)
+  verificationCode String?
+  role             String         @default("USER") // USER, ADMIN
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  properties       Property[]
+  enquiries        Enquiry[]
+  savedListings    SavedListing[]
+  offers           Offer[]
+  notifications    Notification[]
+  reviews          Review[]       @relation("OwnerReviews")
+}
+
+model Property {
+  id           String         @id @default(uuid())
+  title        String
+  description  String?
+  type         String         // "Buy" | "Rent"
+  propertyType String         @default("Apartment") // "Apartment" | "Villa" | "Independent house" | "Plot"
+  price        String         // Display string: e.g. "₹1.85 Cr" or "₹27,500/mo"
+  priceNum     Float          @default(0) // Raw numeric value for sorting and range filtering
+  location     String         // e.g. "Besant Nagar, Chennai"
+  city         String?        @default("Chennai")
+  beds         Int            @default(1)
+  baths        Int            @default(1)
+  area         Int            @default(500) // Square feet
+  tag          String?        // "Ready to move" | "New listing" | "Premium" | "Furnished" | "Pet friendly"
+  status       String         @default("ACTIVE") // "ACTIVE" | "UNDER_OFFER" | "SOLD" | "DRAFT"
+  isFeatured   Boolean        @default(false)
+  images       String?        // JSON stringified array of image URLs
+  ownerId      String?
+  owner        User?          @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  enquiries     Enquiry[]
+  savedListings SavedListing[]
+  offers        Offer[]
+  reviews       Review[]
+}
+
+model Enquiry {
+  id           String   @id @default(uuid())
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name         String
+  phone        String
+  email        String?
+  message      String?
+  type         String   @default("MESSAGE") // "MESSAGE" | "SITE_VISIT"
+  visitDate    String?  // e.g. "2026-09-25"
+  visitTime    String?  // e.g. "Morning (10 AM - 12 PM)"
+  replyMessage String?  // Seller's reply
+  status       String   @default("NEW") // "NEW" | "REPLIED" | "CLOSED"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Offer {
+  id            String   @id @default(uuid())
+  propertyId    String
+  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  buyerId       String?
+  buyer         User?    @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  buyerName     String
+  buyerEmail    String?
+  buyerPhone    String
+  amount        Float
+  amountDisplay String   // e.g. "₹1.75 Cr"
+  message       String?
+  status        String   @default("PENDING") // "PENDING" | "ACCEPTED" | "COUNTERED" | "REJECTED"
+  counterAmount Float?
+  counterNote   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SavedListing {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, propertyId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  type      String   @default("INFO") // "OFFER" | "ENQUIRY" | "STATUS" | "INFO"
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  ownerId    String
+  owner      User     @relation("OwnerReviews", fields: [ownerId], references: [id], onDelete: Cascade)
+  authorName String
+  rating     Int      @default(5)
+  comment    String
+  createdAt  DateTime @default(now())
+}
