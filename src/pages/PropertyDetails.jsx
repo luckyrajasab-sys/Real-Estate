@@ -144,14 +144,38 @@ export default function PropertyDetails() {
       ? "Sold"
       : null;
 
+  const imageMap = {
+    Penthouse: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
+    Villa: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80",
+    Studio: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+    "1BHK": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80",
+    "2BHK": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+    "3BHK": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+    "4BHK+": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
+  };
+
+  const heroImage = property.images
+    ? (typeof property.images === "string" && property.images.startsWith("[")
+        ? JSON.parse(property.images)[0]
+        : property.images)
+    : imageMap[property.propertyType] || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80";
+
   return (
+
     <div className="page">
       <div className="property-header-row">
         <div>
           <div className="property-eyebrow">
-            <span className="eyebrow-note">{property.type === "Buy" ? "For sale" : "For rent"}</span>
+            <span className="badge-luxury">
+              {property.type === "Buy" ? "For Sale" : property.type === "Lease" ? "Executive Lease" : "For Rent"}
+            </span>
+            {property.country && (
+              <span className="eyebrow-note" style={{ marginLeft: "0.5rem" }}>
+                {property.city ? `${property.city}, ` : ""}{property.country}
+              </span>
+            )}
             {statusLabel && (
-              <span className={`status-pill status-${property.status.toLowerCase()}`}>
+              <span className={`status-pill status-${property.status.toLowerCase()}`} style={{ marginLeft: "0.5rem" }}>
                 {statusLabel}
               </span>
             )}
@@ -172,29 +196,74 @@ export default function PropertyDetails() {
         </div>
       </div>
 
+      {/* Live Flat Slot Flash Banner if active */}
+      {property.isFlashOffer && (
+        <div
+          style={{
+            background: "linear-gradient(90deg, #111117 0%, #1A1A24 100%)",
+            border: "1px solid var(--gold)",
+            borderRadius: "var(--radius-md)",
+            padding: "1rem 1.5rem",
+            marginBottom: "1.75rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "1rem",
+            color: "#FFF",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <span className="live-pulse-dot" />
+            <div>
+              <strong style={{ color: "var(--gold)" }}>LIVE PRIORITY FLAT SLOT:</strong> Only{" "}
+              <strong>{property.availableSlots || 0} of {property.totalSlots || 5} slots</strong> remaining!
+              {property.discountPercent ? ` Includes special ${property.discountPercent}% builder incentive.` : ""}
+            </div>
+          </div>
+          <Link to="/live-offers" className="btn btn-primary btn-sm">
+            Reserve Priority Slot →
+          </Link>
+        </div>
+      )}
+
       <div className="detail-grid">
         {/* Left main column */}
         <div className="detail-main-col">
-          <div className="property-media detail-hero-media">
-            <span className="property-badge">{property.tag || property.propertyType}</span>
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M3 11.5 12 4l9 7.5" />
-              <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
-            </svg>
+          <div className="property-media detail-hero-media" style={{ height: "420px", overflow: "hidden", position: "relative", borderRadius: "var(--radius-lg)" }}>
+            <img
+              src={heroImage}
+              alt={property.title}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+            <span className="property-badge" style={{ position: "absolute", top: 16, left: 16 }}>
+              {property.tag || property.propertyType}
+            </span>
           </div>
 
           <div className="spec-grid">
             <div className="spec-item"><div className="num">{property.beds} BHK</div><div className="lbl">Bedrooms</div></div>
             <div className="spec-item"><div className="num">{property.baths}</div><div className="lbl">Bathrooms</div></div>
             <div className="spec-item"><div className="num">{property.area}</div><div className="lbl">Sqft living area</div></div>
-            <div className="spec-item"><div className="num">{property.price}</div><div className="lbl">{property.type === "Buy" ? "Target price" : "Monthly rent"}</div></div>
+            <div className="spec-item">
+              <div className="num">{property.price}</div>
+              <div className="lbl">
+                {property.type === "Buy" ? "Acquisition Price" : property.type === "Lease" ? "Monthly Lease" : "Monthly Rent"}
+              </div>
+            </div>
           </div>
+
+          {property.leaseTerm && (
+            <div className="card" style={{ padding: "1rem 1.5rem", marginTop: "1rem", border: "1px solid var(--gold)" }}>
+              <strong style={{ color: "var(--gold)" }}>Lease Duration:</strong> {property.leaseTerm} • Corporate & Residential Terms Available
+            </div>
+          )}
 
           <div className="card" style={{ padding: "1.5rem", marginTop: "1.5rem" }}>
             <h3 style={{ marginTop: 0 }}>About this property</h3>
             <p>
               {property.description ||
-                `This ${property.type === "Buy" ? "home" : "rental"} in ${property.location} offers ${property.beds} bedrooms and ${property.area} sqft of thoughtfully planned space. It includes title verification and direct owner communications.`}
+                `This ${property.type === "Buy" ? "home" : "residence"} in ${property.location} offers ${property.beds} bedrooms and ${property.area} sqft of thoughtfully planned space. It includes title verification and direct owner communications.`}
             </p>
 
             <div className="verified-strip">
@@ -212,6 +281,7 @@ export default function PropertyDetails() {
               </div>
             </div>
           </div>
+
 
           {/* EMI Loan Calculator (for Buy listings) */}
           {property.type === "Buy" && (

@@ -6,6 +6,7 @@ import {
   createProperty,
   updateProperty,
   deleteProperty,
+  reserveSlot,
 } from "../controllers/properties.js";
 
 const router = Router();
@@ -13,8 +14,10 @@ const router = Router();
 router.get("/featured", getFeaturedProperties);
 router.get("/", listProperties);
 router.get("/:id", getPropertyById);
+router.post("/:id/reserve-slot", reserveSlot);
 router.post("/", createProperty);
 router.put("/:id", updateProperty);
 router.delete("/:id", deleteProperty);
 
 export default router;
+

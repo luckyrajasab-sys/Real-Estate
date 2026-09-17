@@ -125,3 +125,60 @@ export async function getUserListings(req, res) {
     return res.status(500).json({ error: "Failed to get user listings", details: error.message });
   }
 }
+
+export async function socialAuth(req, res) {
+  try {
+    const { email, name, avatar, provider = "GOOGLE" } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required for social authentication." });
+    }
+
+    try {
+      const user = await prisma.user.upsert({
+        where: { email },
+        update: {
+          name: name || undefined,
+          avatar: avatar || undefined,
+          provider: provider.toUpperCase(),
+          verified: true,
+        },
+        create: {
+          email,
+          name: name || (provider === "GOOGLE" ? "Google User" : "Apple User"),
+          avatar: avatar || undefined,
+          provider: provider.toUpperCase(),
+          verified: true,
+          role: "USER",
+        },
+      });
+
+      return res.json({
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+          provider: user.provider,
+          verified: true,
+        },
+      });
+    } catch (dbErr) {
+      console.warn("DB fallback in socialAuth:", dbErr.message);
+      return res.json({
+        user: {
+          id: `social-${Date.now()}`,
+          name: name || (provider === "GOOGLE" ? "Google User" : "Apple User"),
+          email,
+          avatar: avatar || undefined,
+          provider: provider.toUpperCase(),
+          verified: true,
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Error in socialAuth:", error);
+    return res.status(500).json({ error: "Failed to authenticate with social provider", details: error.message });
+  }
+}
+

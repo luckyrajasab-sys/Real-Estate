@@ -13,6 +13,8 @@ model User {
   passwordHash     String?
   name             String
   phone            String?
+  avatar           String?
+  provider         String         @default("LOCAL") // "LOCAL" | "GOOGLE" | "APPLE"
   verified         Boolean        @default(false)
   verificationCode String?
   role             String         @default("USER") // USER, ADMIN
@@ -28,31 +30,43 @@ model User {
 }
 
 model Property {
-  id           String         @id @default(uuid())
-  title        String
-  description  String?
-  type         String         // "Buy" | "Rent"
-  propertyType String         @default("Apartment") // "Apartment" | "Villa" | "Independent house" | "Plot"
-  price        String         // Display string: e.g. "₹1.85 Cr" or "₹27,500/mo"
-  priceNum     Float          @default(0) // Raw numeric value for sorting and range filtering
-  location     String         // e.g. "Besant Nagar, Chennai"
-  city         String?        @default("Chennai")
-  beds         Int            @default(1)
-  baths        Int            @default(1)
-  area         Int            @default(500) // Square feet
-  tag          String?        // "Ready to move" | "New listing" | "Premium" | "Furnished" | "Pet friendly"
-  status       String         @default("ACTIVE") // "ACTIVE" | "UNDER_OFFER" | "SOLD" | "DRAFT"
-  isFeatured   Boolean        @default(false)
-  images       String?        // JSON stringified array of image URLs
-  ownerId      String?
-  owner        User?          @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id              String         @id @default(uuid())
+  title           String
+  description     String?
+  type            String         // "Buy" | "Rent" | "Lease"
+  propertyType    String         @default("Apartment") // "Apartment" | "Villa" | "Penthouse" | "Townhouse" | "Studio" | "Independent house" | "Plot"
+  price           String         // Display string: e.g. "$4,850,000" or "£3,600/mo" or "₹1.85 Cr"
+  priceNum        Float          @default(0) // Numerical value for sorting and range filtering
+  currency        String         @default("INR") // "USD" | "EUR" | "GBP" | "AED" | "JPY" | "INR"
+  country         String         @default("India") // "United States" | "United Kingdom" | "United Arab Emirates" | "Japan" | "France" | "Singapore" | "India"
+  countryCode     String         @default("IN") // "US" | "GB" | "AE" | "JP" | "FR" | "SG" | "IN"
+  location        String         // e.g. "Tribeca, New York" or "Palm Jumeirah, Dubai"
+  city            String?        @default("Chennai")
+  beds            Int            @default(1)
+  baths           Int            @default(1)
+  area            Int            @default(500) // Square feet
+  tag             String?        // "Ready to move" | "Flash Offer" | "Penthouse" | "Beachfront" | "Furnished"
+  status          String         @default("ACTIVE") // "ACTIVE" | "UNDER_OFFER" | "SOLD" | "DRAFT"
+  isFeatured      Boolean        @default(false)
+  
+  // Live flat slots & flash offers
+  isFlashOffer    Boolean        @default(false)
+  discountPercent Int?           @default(0)
+  totalSlots      Int?           @default(1)
+  availableSlots  Int?           @default(1)
+  flashExpiresAt  DateTime?
+  leaseTerm       String?        // e.g. "1 to 3 Years" (for Lease listings)
 
-  enquiries     Enquiry[]
-  savedListings SavedListing[]
-  offers        Offer[]
-  reviews       Review[]
+  images          String?        // JSON stringified array of image URLs
+  ownerId         String?
+  owner           User?          @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  enquiries       Enquiry[]
+  savedListings   SavedListing[]
+  offers          Offer[]
+  reviews         Review[]
 }
 
 model Enquiry {
@@ -65,10 +79,10 @@ model Enquiry {
   phone        String
   email        String?
   message      String?
-  type         String   @default("MESSAGE") // "MESSAGE" | "SITE_VISIT"
-  visitDate    String?  // e.g. "2026-09-25"
-  visitTime    String?  // e.g. "Morning (10 AM - 12 PM)"
-  replyMessage String?  // Seller's reply
+  type         String   @default("MESSAGE") // "MESSAGE" | "SITE_VISIT" | "SLOT_RESERVATION"
+  visitDate    String?
+  visitTime    String?
+  replyMessage String?
   status       String   @default("NEW") // "NEW" | "REPLIED" | "CLOSED"
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -84,7 +98,8 @@ model Offer {
   buyerEmail    String?
   buyerPhone    String
   amount        Float
-  amountDisplay String   // e.g. "₹1.75 Cr"
+  amountDisplay String
+  currency      String   @default("INR")
   message       String?
   status        String   @default("PENDING") // "PENDING" | "ACCEPTED" | "COUNTERED" | "REJECTED"
   counterAmount Float?
@@ -112,7 +127,7 @@ model Notification {
   message   String
   link      String?
   read      Boolean  @default(false)
-  type      String   @default("INFO") // "OFFER" | "ENQUIRY" | "STATUS" | "INFO"
+  type      String   @default("INFO") // "OFFER" | "ENQUIRY" | "STATUS" | "FLASH_SLOT" | "INFO"
   createdAt DateTime @default(now())
 }
 

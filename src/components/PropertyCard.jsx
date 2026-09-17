@@ -69,12 +69,39 @@ export default function PropertyCard({
       ? "Sold"
       : null;
 
+  const imageMap = {
+    Penthouse: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
+    Villa: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=800&q=80",
+    Studio: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
+    "1BHK": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80",
+    "2BHK": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
+    "3BHK": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80",
+    "4BHK+": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80",
+  };
+
+  const cardImage = property.images
+    ? (typeof property.images === "string" && property.images.startsWith("[")
+        ? JSON.parse(property.images)[0]
+        : property.images)
+    : imageMap[property.propertyType] || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80";
+
   return (
     <div className="card property-card-wrapper">
       <Link to={`/property/${property.id}`} className="property-card-link">
-        <div className="property-media">
+        <div className="property-media" style={{ height: "200px", position: "relative", overflow: "hidden" }}>
+          <img
+            src={cardImage}
+            alt={property.title}
+            loading="lazy"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+
           <div className="property-badges-row">
-            {statusLabel ? (
+            {property.isFlashOffer ? (
+              <span className="property-badge" style={{ background: "#EF4444", color: "#FFF", fontWeight: 700 }}>
+                ⚡ {property.availableSlots || 0} SLOTS LEFT
+              </span>
+            ) : statusLabel ? (
               <span className={`property-badge status-${(property.status || "").toLowerCase()}`}>
                 {statusLabel}
               </span>
@@ -92,12 +119,6 @@ export default function PropertyCard({
           >
             {heartIcon(savedLocal)}
           </button>
-
-          {/* Icon placeholder or thumbnail */}
-          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M3 11.5 12 4l9 7.5" />
-            <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
-          </svg>
         </div>
 
         <div className="property-body">
@@ -106,14 +127,18 @@ export default function PropertyCard({
             {property.propertyType && <span className="property-type-pill">{property.propertyType}</span>}
           </div>
           <div className="property-title">{property.title}</div>
-          <div className="property-loc">{property.location}</div>
+          <div className="property-loc">
+            {property.city ? `${property.city} • ${property.location}` : property.location}
+          </div>
           <div className="property-meta">
             <span>{property.beds} bd</span>
             <span>{property.baths} ba</span>
             <span>{property.area} sqft</span>
+            {property.type && <span style={{ marginLeft: "auto", color: "var(--gold)", fontWeight: 600 }}>{property.type}</span>}
           </div>
         </div>
       </Link>
+
 
       {showCompare && (
         <div className="property-card-compare-bar" onClick={(e) => e.stopPropagation()}>

@@ -79,7 +79,77 @@ export function AuthProvider({ children }) {
       err.needsVerification = true;
       throw err;
     }
-    const session = { name: found.name, email: found.email };
+    const session = { id: found.id || `u-${Date.now()}`, name: found.name, email: found.email, provider: "LOCAL" };
+    setUser(session);
+    return session;
+  }
+
+  async function loginWithGoogle(customUser = null) {
+    const googleProfile = customUser || {
+      name: "Julian Sterling",
+      email: "julian.sterling@gmail.com",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80",
+      provider: "GOOGLE",
+    };
+
+    try {
+      const res = await fetch("/api/users/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(googleProfile),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        return data.user;
+      }
+    } catch {
+      // Offline fallback
+    }
+
+    const session = {
+      id: `google-${Date.now()}`,
+      name: googleProfile.name,
+      email: googleProfile.email,
+      avatar: googleProfile.avatar,
+      provider: "GOOGLE",
+      verified: true,
+    };
+    setUser(session);
+    return session;
+  }
+
+  async function loginWithApple(customUser = null) {
+    const appleProfile = customUser || {
+      name: "Genevieve Dubois",
+      email: "genevieve.dubois@icloud.com",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80",
+      provider: "APPLE",
+    };
+
+    try {
+      const res = await fetch("/api/users/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(appleProfile),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        return data.user;
+      }
+    } catch {
+      // Offline fallback
+    }
+
+    const session = {
+      id: `apple-${Date.now()}`,
+      name: appleProfile.name,
+      email: appleProfile.email,
+      avatar: appleProfile.avatar,
+      provider: "APPLE",
+      verified: true,
+    };
     setUser(session);
     return session;
   }
@@ -90,7 +160,17 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, lastCode, register, verifyEmail, resendCode, login, logout }}
+      value={{
+        user,
+        lastCode,
+        register,
+        verifyEmail,
+        resendCode,
+        login,
+        loginWithGoogle,
+        loginWithApple,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>
